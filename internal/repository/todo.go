@@ -13,7 +13,7 @@ func CreateTodo(pool *pgxpool.Pool, title string, completed bool) (*models.Todo,
 	defer cancel()
 
 	query := `
-	INSERT INTO todos (title, completes)
+	INSERT INTO todos (title, completed)
 	VALUES ($1, $2)
 	RETURNING id, title, completed, created_at, updated_at
 	`
