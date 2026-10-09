@@ -35,6 +35,7 @@ func main() {
 	})
 
 	router.POST("/todos", handlers.CreateTodoHandler(pool))
+	router.GET("/todos", handlers.GetAllTodosHandler(pool))
 
 	router.Run(fmt.Sprintf(":%s", cfg.Port))
 }
