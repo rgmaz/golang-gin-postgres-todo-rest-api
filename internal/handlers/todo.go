@@ -2,8 +2,10 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rgmaz/golang-gin-postgres-todo-rest-api/internal/repository"
 )
@@ -23,7 +25,11 @@ func CreateTodoHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 			return
 		}
 
-		createdTodo, err := repository.CreateTodo(pool, userInput.Title, userInput.Completed)
+		createdTodo, err := repository.CreateTodo(
+			pool,
+			userInput.Title,
+			userInput.Completed,
+		)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -42,5 +48,28 @@ func GetAllTodosHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusOK, todos)
+	}
+}
+
+func GetTodoByIdHandler(pool *pgxpool.Pool) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		id, err := strconv.Atoi(ctx.Param("id"))
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid todo ID"})
+			return
+		}
+
+		todo, err := repository.GetTodoById(pool, id)
+		if err != nil {
+			if err == pgx.ErrNoRows {
+				ctx.JSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
+				return
+			}
+
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, todo)
 	}
 }
