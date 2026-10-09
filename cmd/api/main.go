@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rgmaz/golang-gin-postgres-todo-rest-api/internal/config"
 	"github.com/rgmaz/golang-gin-postgres-todo-rest-api/internal/database"
+	"github.com/rgmaz/golang-gin-postgres-todo-rest-api/internal/handlers"
 )
 
 func main() {
@@ -32,6 +33,8 @@ func main() {
 			"status":  "success",
 		})
 	})
+
+	router.POST("/todos", handlers.CreateTodoHandler(pool))
 
 	router.Run(fmt.Sprintf(":%s", cfg.Port))
 }
