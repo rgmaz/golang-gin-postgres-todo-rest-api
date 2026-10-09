@@ -1,12 +1,28 @@
 package main
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rgmaz/golang-gin-postgres-todo-rest-api/internal/config"
+	"github.com/rgmaz/golang-gin-postgres-todo-rest-api/internal/database"
 )
 
 func main() {
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("Failed to load config: %v", err)
+	}
+
+	pool, err := database.Connect(cfg.DatabaseURL)
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+
+	defer pool.Close()
+
 	router := gin.Default()
 	router.SetTrustedProxies(nil)
 
@@ -17,5 +33,5 @@ func main() {
 		})
 	})
 
-	router.Run(":3000")
+	router.Run(fmt.Sprintf(":%s", cfg.Port))
 }
