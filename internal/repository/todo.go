@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rgmaz/golang-gin-postgres-todo-rest-api/internal/models"
 )
@@ -95,10 +94,32 @@ func GetTodoById(pool *pgxpool.Pool, id int) (*models.Todo, error) {
 		&todo.CreatedAt,
 		&todo.UpdatedAt,
 	); err != nil {
-		if err == pgx.ErrNoRows {
-			return nil, err
-		}
+		return nil, err
+	}
 
+	return &todo, nil
+}
+
+func UpdateTodoById(pool *pgxpool.Pool, id int, newTitle string, newCompleted bool) (*models.Todo, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+	UPDATE todos
+	SET title = $1, completed = $2, updated_at = CURRENT_TIMESTAMP
+	WHERE id = $3
+	RETURNING id, title, completed, created_at, updated_at
+	`
+
+	var todo models.Todo
+
+	if err := pool.QueryRow(ctx, query, newTitle, newCompleted, id).Scan(
+		&todo.Id,
+		&todo.Title,
+		&todo.Completed,
+		&todo.CreatedAt,
+		&todo.UpdatedAt,
+	); err != nil {
 		return nil, err
 	}
 

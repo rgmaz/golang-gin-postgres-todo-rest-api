@@ -15,10 +15,14 @@ type createTodoInput struct {
 	Completed bool   `json:"completed"`
 }
 
+type updateTodoInput struct {
+	Title     string `json:"title"`
+	Completed *bool  `json:"completed"`
+}
+
 func CreateTodoHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		userInput := createTodoInput{}
-
+		var userInput createTodoInput
 		err := ctx.ShouldBindJSON(&userInput)
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -71,5 +75,50 @@ func GetTodoByIdHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusOK, todo)
+	}
+}
+
+func UpdateTodoByIdHandler(pool *pgxpool.Pool) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		id, err := strconv.Atoi(ctx.Param("id"))
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid todo ID"})
+			return
+		}
+
+		var userInput updateTodoInput
+		err = ctx.ShouldBindJSON(&userInput)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		if userInput.Title == "" {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "title cannot be empty"})
+			return
+		}
+
+		if userInput.Completed == nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "completed cannot be empty"})
+			return
+		}
+
+		updatedTodo, err := repository.UpdateTodoById(
+			pool,
+			id,
+			userInput.Title,
+			*userInput.Completed,
+		)
+		if err != nil {
+			if err == pgx.ErrNoRows {
+				ctx.JSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
+				return
+			}
+
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, updatedTodo)
 	}
 }
