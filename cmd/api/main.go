@@ -40,5 +40,7 @@ func main() {
 	router.PUT("/todos/:id", handlers.UpdateTodoByIdHandler(pool))
 	router.DELETE("/todos/:id", handlers.DeleteTodoByIdHandler(pool))
 
+	router.POST("/auth/register", handlers.CreateUserHandler(pool))
+
 	router.Run(fmt.Sprintf(":%s", cfg.Port))
 }
