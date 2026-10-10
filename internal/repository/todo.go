@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rgmaz/golang-gin-postgres-todo-rest-api/internal/models"
 )
@@ -124,4 +125,25 @@ func UpdateTodoById(pool *pgxpool.Pool, id int, newTitle string, newCompleted bo
 	}
 
 	return &todo, nil
+}
+
+func DeleteTodoById(pool *pgxpool.Pool, id int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+	DELETE FROM todos 
+	WHERE id = $1
+	`
+
+	tag, err := pool.Exec(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
+	if tag.RowsAffected() == 0 {
+		return pgx.ErrNoRows
+	}
+
+	return nil
 }
